@@ -7,6 +7,9 @@ local localPlayer = Players.LocalPlayer
 local enabled = true
 local buying = false
 
+-- Wait for game to fully load before grabbing screen size
+task.wait(3)
+
 -- ═══════════════════════════
 --       ROUNDED GUI
 -- ═══════════════════════════
@@ -126,6 +129,12 @@ local function getHRP()
     return char:FindFirstChild("HumanoidRootPart")
 end
 
+local function hasForceField()
+    local char = localPlayer.Character
+    if not char then return true end
+    return char:FindFirstChildWhichIsA("ForceField") ~= nil
+end
+
 local function buyArmor()
     if buying then return end
     buying = true
@@ -204,10 +213,13 @@ end
 --        POLL LOOP
 -- ═══════════════════════════
 task.spawn(function()
-    task.wait(2)
+    task.wait(3)
     while true do
         task.wait(0.1)
         if not enabled or buying then continue end
+
+        -- Skip if forcefield is active (still spawning in)
+        if hasForceField() then continue end
 
         local char = localPlayer.Character
         if not char then continue end
