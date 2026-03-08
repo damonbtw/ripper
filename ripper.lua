@@ -199,12 +199,18 @@ local function buyArmor()
     pressShift()
     task.wait(0.1)
 
-    -- Tp back
-    hrp = getHRP()
-    if hrp then
-        hrp.Position = returnPos
+    -- Tp back - fresh reference every time
+    task.wait(0.3)
+    local freshChar = localPlayer.Character
+    if freshChar then
+        local freshHrp = freshChar:FindFirstChild("HumanoidRootPart")
+        if freshHrp then
+            freshHrp.Position = returnPos
+        end
     end
 
+    task.wait(1)
+    buying = false
     task.wait(1)
     buying = false
 end
