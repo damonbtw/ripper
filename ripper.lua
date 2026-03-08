@@ -2,6 +2,13 @@
 -- F1 to toggle on/off
 
 local Players = game:GetService("Players")
+
+-- Wait for everything to be ready (important for auto-execute)
+repeat task.wait() until game:IsLoaded()
+repeat task.wait() until Players.LocalPlayer
+repeat task.wait() until Players.LocalPlayer.Character
+repeat task.wait() until workspace.CurrentCamera
+
 local Mouse = Players.LocalPlayer:GetMouse()
 local localPlayer = Players.LocalPlayer
 local enabled = true
