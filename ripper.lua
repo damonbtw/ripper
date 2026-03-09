@@ -3,26 +3,57 @@
 
 local Players = game:GetService("Players")
 
+local enabled = true
+local buying = false
+local boxW = 140
+local boxH = 34
+local guiBg, guiBorder, guiAccent, guiLabel
+
+local function updateLabel()
+    if not guiBg then return end
+    local pos = guiBg.Position
+    if enabled then
+        local t = "Damon <3 | ON"
+        guiLabel.Text = t
+        guiLabel.Color = Color3.fromHex("#64DC82")
+        guiLabel.Position = Vector2.new(pos.X + (boxW / 2) - (#t * 7 / 2), pos.Y + 10)
+        guiAccent.Color = Color3.fromHex("#64DC82")
+    else
+        local t = "Damon <3 | OFF"
+        guiLabel.Text = t
+        guiLabel.Color = Color3.fromHex("#888888")
+        guiLabel.Position = Vector2.new(pos.X + (boxW / 2) - (#t * 7 / 2), pos.Y + 10)
+        guiAccent.Color = Color3.fromHex("#444444")
+    end
+end
+
+-- F1 toggle - no wait, instant
 task.spawn(function()
+    local wasF1 = false
+    while true do
+        wait(0.01)
+        local f1 = iskeypressed(112)
+        if f1 and not wasF1 then
+            enabled = not enabled
+            updateLabel()
+        end
+        wasF1 = f1
+    end
+end)
 
-    -- Wait for full game load
-    task.wait(8) -- wait for everything to load
+-- Main logic - single spawn, wait inside
+task.spawn(function()
+    task.wait(5)
 
-    local Mouse = Players.LocalPlayer:GetMouse()
     local localPlayer = Players.LocalPlayer
-    local enabled = true
-    local buying = false
-    local boxW = 140
-    local boxH = 34
+    local Mouse = localPlayer:GetMouse()
 
-    -- ═══════════════════════════
-    --       ROUNDED GUI
-    -- ═══════════════════════════
+    -- GUI
     local screenWidth = workspace.CurrentCamera.ViewportSize.X
     local boxX = (screenWidth / 2) - (boxW / 2)
     local boxY = 14
 
-    local guiBg = Drawing.new("Square")
+    guiBg = Drawing.new("Square")
     guiBg.Visible = true
     guiBg.Transparency = 1
     guiBg.ZIndex = 10
@@ -32,7 +63,7 @@ task.spawn(function()
     guiBg.Filled = true
     guiBg.Corner = 10
 
-    local guiBorder = Drawing.new("Square")
+    guiBorder = Drawing.new("Square")
     guiBorder.Visible = true
     guiBorder.Transparency = 1
     guiBorder.ZIndex = 11
@@ -43,7 +74,7 @@ task.spawn(function()
     guiBorder.Size = guiBg.Size
     guiBorder.Corner = 10
 
-    local guiAccent = Drawing.new("Square")
+    guiAccent = Drawing.new("Square")
     guiAccent.Visible = true
     guiAccent.Transparency = 1
     guiAccent.ZIndex = 12
@@ -53,7 +84,7 @@ task.spawn(function()
     guiAccent.Size = Vector2.new(boxW - 20, 2)
     guiAccent.Corner = 2
 
-    local guiLabel = Drawing.new("Text")
+    guiLabel = Drawing.new("Text")
     guiLabel.Visible = true
     guiLabel.ZIndex = 13
     guiLabel.Text = "Damon <3 | ON"
@@ -63,48 +94,14 @@ task.spawn(function()
     guiLabel.Outline = false
     guiLabel.Position = Vector2.new(boxX + (boxW / 2) - (#"Damon <3 | ON" * 7 / 2), boxY + 10)
 
-    -- ═══════════════════════════
-    --       UPDATE LABEL
-    -- ═══════════════════════════
-    local function updateLabel()
-        local pos = guiBg.Position
-        if enabled then
-            local t = "Damon <3 | ON"
-            guiLabel.Text = t
-            guiLabel.Color = Color3.fromHex("#64DC82")
-            guiLabel.Position = Vector2.new(pos.X + (boxW / 2) - (#t * 7 / 2), pos.Y + 10)
-            guiAccent.Color = Color3.fromHex("#64DC82")
-        else
-            local t = "Damon <3 | OFF"
-            guiLabel.Text = t
-            guiLabel.Color = Color3.fromHex("#888888")
-            guiLabel.Position = Vector2.new(pos.X + (boxW / 2) - (#t * 7 / 2), pos.Y + 10)
-            guiAccent.Color = Color3.fromHex("#444444")
-        end
-    end
-
-    -- ═══════════════════════════
-    --       DRAG + F1 TOGGLE
-    -- ═══════════════════════════
+    -- Drag
     task.spawn(function()
         local dragging = false
         local dragStart = nil
         local startPos = nil
         local lastMouse1 = false
-        local wasF1 = false
-
         while true do
             wait(0.01)
-
-            -- F1 toggle always fires regardless of focus
-            local f1 = iskeypressed(112)
-            if f1 and not wasF1 then
-                enabled = not enabled
-                updateLabel()
-            end
-            wasF1 = f1
-
-            -- Drag only when game is focused
             if isrbxactive() then
                 local mouse1 = ismouse1pressed()
                 local mPos = Vector2.new(Mouse.X, Mouse.Y)
@@ -131,9 +128,6 @@ task.spawn(function()
         end
     end)
 
-    -- ═══════════════════════════
-    --         FUNCTIONS
-    -- ═══════════════════════════
     local function pressShift()
         keypress(0xA0)
         task.wait(0.1)
@@ -144,7 +138,7 @@ task.spawn(function()
     local function hasForceField()
         local char = localPlayer.Character
         if not char then return true end
-        return char:FindFirstChildWhichIsA("ForceField") ~= nil
+        return char:FindFirstChild("ForceField") ~= nil
     end
 
     local function buyArmor()
@@ -168,63 +162,59 @@ task.spawn(function()
         if not head then buying = false return end
 
         local returnPos = Vector3.new(hrp.Position.X, hrp.Position.Y, hrp.Position.Z)
+        local shopPos = head.Position + Vector3.new(0, 2.5, 0)
 
-        -- Unequip tool
+        -- Unequip
         keypress(0x31) task.wait(0.05) keyrelease(0x31) task.wait(0.05)
         keypress(0x32) task.wait(0.05) keyrelease(0x32) task.wait(0.05)
         keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.05)
-        keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.1)
+        keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.05)
 
-        -- Teleport to shop and keep forcing position every tick
-        local shopPos = head.Position + Vector3.new(0, 2.5, 0)
+        -- Zoom to first person
+        for i = 1, 10 do mousescroll(-1) end
+
+        -- TP + look down hard + exit shiftlock
         hrp.Position = shopPos
-        task.wait(0.15)
-
-        mousemoverel(0, 9999)
-        task.wait(0.1)
-        mousemoverel(0, 9999)
-        task.wait(0.1)
-
+        for i = 1, 10 do mousemoverel(0, 9999) end
         pressShift()
-        task.wait(0.1)
+        for i = 1, 10 do mousemoverel(0, 9999) end
 
-        mousemoverel(0, 9999)
-        task.wait(0.1)
-
-        -- Spam click while forcing position every iteration
+        -- Click loop
         local attempts = 0
         while attempts < 50 do
             if not enabled then break end
-            -- Force position every click attempt so we can't drift
             local c = localPlayer.Character
             if c then
                 local h = c:FindFirstChild("HumanoidRootPart")
                 if h then h.Position = shopPos end
             end
-            mousemoverel(0, 9999)
+            for i = 1, 3 do mousemoverel(0, 9999) end
             mouse1click()
-            task.wait(0.1)
+            task.wait(0.05)
             if armorVal.Value > 0 then break end
             attempts += 1
         end
 
-        -- Reset camera
-        mousemoverel(0, -9999)
+        -- Reset camera + zoom back out
+        for i = 1, 10 do mousemoverel(0, -9999) end
         task.wait(0.05)
         mousemoverel(0, 3600)
+        for i = 1, 10 do mousescroll(1) end
         task.wait(0.1)
 
         -- Re-enter shiftlock
         pressShift()
         task.wait(0.1)
 
-        -- Tp back
-        task.wait(0.3)
-        local freshChar = localPlayer.Character
-        if freshChar then
-            local freshHrp = freshChar:FindFirstChild("HumanoidRootPart")
-            if freshHrp then
-                freshHrp.Position = returnPos
+        -- Tp back - retry a few times to make sure it sticks
+        for i = 1, 5 do
+            task.wait(0.2)
+            local freshChar = localPlayer.Character
+            if freshChar then
+                local freshHrp = freshChar:FindFirstChild("HumanoidRootPart")
+                if freshHrp then
+                    freshHrp.Position = returnPos
+                end
             end
         end
 
@@ -232,28 +222,27 @@ task.spawn(function()
         buying = false
     end
 
-    -- ═══════════════════════════
-    --        POLL LOOP
-    -- ═══════════════════════════
-    task.spawn(function()
-        while true do
-            task.wait(0.1)
-            if not enabled or buying then continue end
-            if hasForceField() then continue end
+    -- Poll loop
+    while true do
+        task.wait(0.05)
+        if not enabled or buying then continue end
+        if hasForceField() then continue end
 
-            local char = localPlayer.Character
-            if not char then continue end
+        local char = localPlayer.Character
+        if not char then continue end
 
-            local bodyEffects = char:FindFirstChild("BodyEffects")
-            if not bodyEffects then continue end
+        -- Skip if dead
+        local humanoid = char:FindFirstChild("Humanoid")
+        if not humanoid or humanoid.Health <= 15 then continue end
 
-            local armorVal = bodyEffects:FindFirstChild("Armor")
-            if not armorVal then continue end
+        local bodyEffects = char:FindFirstChild("BodyEffects")
+        if not bodyEffects then continue end
 
-            if armorVal.Value <= 0 then
-                buyArmor()
-            end
+        local armorVal = bodyEffects:FindFirstChild("Armor")
+        if not armorVal then continue end
+
+        if armorVal.Value <= 0 then
+            buyArmor()
         end
-    end)
-
-end) -- end main task.spawn
+    end
+end)
