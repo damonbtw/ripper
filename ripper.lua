@@ -6,7 +6,7 @@ local Players = game:GetService("Players")
 task.spawn(function()
 
     -- Wait for full game load
-    task.wait(5) -- wait for everything to load
+    task.wait(8) -- wait for everything to load
 
     local Mouse = Players.LocalPlayer:GetMouse()
     local localPlayer = Players.LocalPlayer
@@ -175,21 +175,9 @@ task.spawn(function()
         keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.05)
         keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.1)
 
-        -- Force first person
-        local camera = workspace.CurrentCamera
-        local oldCameraMode = localPlayer.CameraMode
-        localPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
-
-        -- Lock to shop position every frame while buying
+        -- Teleport to shop and keep forcing position every tick
         local shopPos = head.Position + Vector3.new(0, 2.5, 0)
-        local lockConn = game:GetService("RunService").Heartbeat:Connect(function()
-            local c = localPlayer.Character
-            if c then
-                local h = c:FindFirstChild("HumanoidRootPart")
-                if h then h.Position = shopPos end
-            end
-        end)
-
+        hrp.Position = shopPos
         task.wait(0.15)
 
         mousemoverel(0, 9999)
@@ -203,20 +191,22 @@ task.spawn(function()
         mousemoverel(0, 9999)
         task.wait(0.1)
 
-        -- Spam click
+        -- Spam click while forcing position every iteration
         local attempts = 0
         while attempts < 50 do
             if not enabled then break end
+            -- Force position every click attempt so we can't drift
+            local c = localPlayer.Character
+            if c then
+                local h = c:FindFirstChild("HumanoidRootPart")
+                if h then h.Position = shopPos end
+            end
             mousemoverel(0, 9999)
             mouse1click()
             task.wait(0.1)
             if armorVal.Value > 0 then break end
             attempts += 1
         end
-
-        -- Stop locking position and restore camera
-        lockConn:Disconnect()
-        localPlayer.CameraMode = Enum.CameraMode.Classic
 
         -- Reset camera
         mousemoverel(0, -9999)
