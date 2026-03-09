@@ -175,8 +175,21 @@ task.spawn(function()
         keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.05)
         keypress(0x33) task.wait(0.05) keyrelease(0x33) task.wait(0.1)
 
-        -- Teleport to shop
-        hrp.Position = head.Position + Vector3.new(0, 2.5, 0)
+        -- Force first person
+        local camera = workspace.CurrentCamera
+        local oldCameraMode = localPlayer.CameraMode
+        localPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+
+        -- Lock to shop position every frame while buying
+        local shopPos = head.Position + Vector3.new(0, 2.5, 0)
+        local lockConn = game:GetService("RunService").Heartbeat:Connect(function()
+            local c = localPlayer.Character
+            if c then
+                local h = c:FindFirstChild("HumanoidRootPart")
+                if h then h.Position = shopPos end
+            end
+        end)
+
         task.wait(0.15)
 
         mousemoverel(0, 9999)
@@ -200,6 +213,10 @@ task.spawn(function()
             if armorVal.Value > 0 then break end
             attempts += 1
         end
+
+        -- Stop locking position and restore camera
+        lockConn:Disconnect()
+        localPlayer.CameraMode = Enum.CameraMode.Classic
 
         -- Reset camera
         mousemoverel(0, -9999)
